@@ -47,13 +47,13 @@
         <section class="glass-card">
           <h3 class="text-xs font-black uppercase tracking-[0.2em] text-indigo-400 mb-6 flex items-center gap-4">
             <span class="w-8 h-[1px] bg-indigo-500/50"></span>
-            Details de la Mission
+            Description
             <span class="flex-1 h-[1px] bg-white/5"></span>
           </h3>
           <p class="text-slate-300 leading-relaxed">{{ request.description || 'Pas de description.' }}</p>
           
           <div class="mt-8 pt-8 border-t border-white/5">
-            <h4 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.2em]">Inventaire des Articles</h4>
+            <h4 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.2em]">Articles</h4>
             <div class="space-y-3">
               <div v-for="item in request.items" :key="item.id" class="flex justify-between items-center bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:bg-white/[0.05] transition-colors">
                 <div>
