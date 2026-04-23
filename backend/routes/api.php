@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('purchase-requests/{purchaseRequest}/devis/{devi}/select', [\App\Http\Controllers\Api\DevisController::class, 'select']);
     Route::post('purchase-requests/{purchaseRequest}/attachments', [\App\Http\Controllers\Api\AttachmentController::class, 'store']);
     Route::get('attachments/{attachment}/download', [\App\Http\Controllers\Api\AttachmentController::class, 'download']);
+    Route::delete('attachments/{attachment}', [\App\Http\Controllers\Api\AttachmentController::class, 'destroy']);
     Route::apiResource('purchase-requests.messages', \App\Http\Controllers\Api\MessageController::class)->only(['index', 'store']);
     Route::apiResource('suppliers', \App\Http\Controllers\Api\SupplierController::class);
     

@@ -118,12 +118,19 @@
           </h3>
           
           <div class="space-y-3 mb-6">
-            <div v-for="file in request.attachments" :key="file.id" class="flex justify-between items-center p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all cursor-pointer group" @click="downloadFile(file)">
-              <div class="flex items-center gap-3 overflow-hidden">
+            <div v-for="file in request.attachments" :key="file.id" class="flex justify-between items-center p-3.5 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all group">
+              <div class="flex items-center gap-3 overflow-hidden cursor-pointer flex-1" @click="downloadFile(file)">
                 <svg class="w-5 h-5 text-pink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <div class="truncate text-xs text-slate-300 font-mono">{{ file.original_name || 'Document attaché' }}</div>
               </div>
-              <svg class="w-4 h-4 text-slate-500 group-hover:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              <div class="flex items-center gap-2">
+                <button @click="downloadFile(file)" class="p-1.5 text-slate-500 hover:text-pink-400 transition-colors" title="Télécharger">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                </button>
+                <button v-if="authStore.user?.id === file.user_id || authStore.user?.role === 'directeur'" @click="deleteAttachment(file.id)" class="p-1.5 text-slate-500 hover:text-rose-500 transition-colors" title="Supprimer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </div>
             </div>
             <div v-if="request.attachments.length === 0" class="text-xs text-slate-500 italic p-6 text-center border border-dashed border-white/10 rounded-xl">Aucun fichier.</div>
           </div>
@@ -414,6 +421,16 @@ const downloadFile = async (file) => {
   } catch (err) {
     console.error('Download error:', err);
     alert('Echec du téléchargement: ' + (err.message || 'Veuillez vérifier votre connexion.'));
+  }
+};
+
+const deleteAttachment = async (id) => {
+  if (!confirm('Supprimer cette pièce jointe ?')) return;
+  try {
+    await axios.delete(`/api/attachments/${id}`);
+    await fetchRequest();
+  } catch (err) {
+    alert('Echec de suppression du fichier.');
   }
 };
 
