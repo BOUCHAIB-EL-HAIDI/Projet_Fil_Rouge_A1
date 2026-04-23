@@ -39,10 +39,10 @@
           <button v-if="request.status === 'approved'" @click="updateStatus('in_progress')" class="btn bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500 hover:text-white">
             Commencer le traitement
           </button>
-          <button v-if="request.status === 'ordered'" @click="updateStatus('consultation')" class="btn bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white shadow-lg shadow-amber-500/20">
+          <button v-if="request.status === 'in_progress'" @click="updateStatus('consultation')" class="btn bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white shadow-lg shadow-amber-500/20">
             Lancer la consultation
           </button>
-          <button v-if="request.status === 'consultation'" @click="updateStatus('delivered')" class="btn bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white shadow-lg shadow-emerald-500/20">
+          <button v-if="request.status === 'ordered'" @click="updateStatus('delivered')" class="btn bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white shadow-lg shadow-emerald-500/20">
             Confirmer la livraison
           </button>
         </template>
