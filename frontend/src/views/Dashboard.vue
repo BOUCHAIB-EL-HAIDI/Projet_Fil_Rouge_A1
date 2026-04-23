@@ -193,8 +193,7 @@ const statusMap = {
   'in_progress': { class: 'bg-indigo-400/10 text-indigo-400', dotClass: 'bg-indigo-400' },
   'ordered': { class: 'bg-blue-400/10 text-blue-400', dotClass: 'bg-blue-400' },
   'delivered': { class: 'bg-emerald-400/10 text-emerald-400', dotClass: 'bg-emerald-400' },
-  'rejected': { class: 'bg-rose-400/10 text-rose-400', dotClass: 'bg-rose-400' },
-  'cancelled': { class: 'bg-slate-600/10 text-slate-500', dotClass: 'bg-slate-600' }
+  'rejected': { class: 'bg-rose-400/10 text-rose-400', dotClass: 'bg-rose-400' }
 };
 
 const priorityLabel = (priority) => {
@@ -214,8 +213,7 @@ const statusLabel = (status) => {
     in_progress: 'En traitement',
     ordered: 'Commande passee',
     delivered: 'Livree',
-    rejected: 'Refusee',
-    cancelled: 'Annulee'
+    rejected: 'Refusee'
   };
   return labels[status] || String(status).replace(/_/g, ' ');
 };

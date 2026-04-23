@@ -13,5 +13,4 @@ enum PurchaseRequestStatus: string
     case CONSULTATION = 'consultation';
     case DELIVERED = 'delivered';
     case REJECTED = 'rejected';
-    case CANCELLED = 'cancelled';
 }

@@ -374,8 +374,7 @@ const statusLabel = (status) => {
     ordered: 'Commande passee',
     delivered: 'Livree',
     consultation: 'En Consultation',
-    rejected: 'Refusee',
-    cancelled: 'Annulee'
+    rejected: 'Refusee'
   };
   return labels[status] || String(status).replace(/_/g, ' ');
 };
@@ -389,8 +388,7 @@ const statusMap = {
   'ordered': { class: 'bg-blue-400/10 text-blue-400 border-blue-400/20' },
   'consultation': { class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   'delivered': { class: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20' },
-  'rejected': { class: 'bg-rose-400/10 text-rose-400 border-rose-400/20' },
-  'cancelled': { class: 'bg-slate-600/10 text-slate-500 border-slate-600/20' }
+  'rejected': { class: 'bg-rose-400/10 text-rose-400 border-rose-400/20' }
 };
 
 const chatActive = computed(() => {
