@@ -3,7 +3,8 @@
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-16">
       <div>
         <div class="flex items-center gap-4 mb-2">
-          <h1 class="text-4xl font-extrabold uppercase tracking-tight glass-gradient-text">{{ request.title }}</h1>
+          <input v-if="isEditing" v-model="editForm.title" class="text-4xl font-extrabold uppercase tracking-tight bg-white/5 border border-indigo-500/30 rounded-lg px-4 py-1 text-white outline-none focus:border-indigo-500">
+          <h1 v-else class="text-4xl font-extrabold uppercase tracking-tight glass-gradient-text">{{ request.title }}</h1>
           <div :class="[
             'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border',
             statusMap[request.status]?.class || 'bg-slate-400/10 text-slate-400 border-slate-400/20'
@@ -17,7 +18,20 @@
       </div>
       
       <div class="flex gap-4">
-        <button v-if="isDemandeurAndDraft" @click="updateStatus('pending_manager')" class="btn bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white">
+        <template v-if="isDemandeurAndDraft">
+          <button @click="isEditing = !isEditing" class="btn bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10">
+            {{ isEditing ? 'Annuler' : 'Modifier' }}
+          </button>
+          <button v-if="isEditing" @click="saveEdits" class="btn bg-indigo-500 text-white hover:bg-indigo-600 shadow-lg shadow-indigo-500/20">
+            Sauvegarder
+          </button>
+          <button v-if="!isEditing" @click="confirmDelete" class="btn bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white">
+            Supprimer
+          </button>
+          <div class="w-[1px] h-8 bg-white/5 mx-2"></div>
+        </template>
+
+        <button v-if="isDemandeurAndDraft && !isEditing" @click="updateStatus('pending_manager')" class="btn bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white">
           Soumettre la demande
         </button>
 
@@ -43,18 +57,34 @@
             Description
             <span class="flex-1 h-[1px] bg-white/5"></span>
           </h3>
-          <p class="text-slate-300 leading-relaxed">{{ request.description || 'Pas de description.' }}</p>
+          <textarea v-if="isEditing" v-model="editForm.description" class="input-field h-32"></textarea>
+          <div v-else class="text-slate-300 leading-relaxed whitespace-pre-line">{{ request.description || 'Pas de description.' }}</div>
           
           <div class="mt-8 pt-8 border-t border-white/5">
             <h4 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.2em]">Articles</h4>
             <div class="space-y-3">
-              <div v-for="item in request.items" :key="item.id" class="flex justify-between items-center bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:bg-white/[0.05] transition-colors">
-                <div>
-                  <div class="font-bold text-slate-200 text-lg">{{ item.productName }}</div>
-                  <div class="text-[10px] text-slate-500 font-mono mt-1">REF: {{ item.reference || 'N/A' }}</div>
+              <template v-if="isEditing">
+                 <div v-for="(item, index) in editForm.items" :key="index" class="flex gap-4 items-center bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                    <input v-model="item.productName" placeholder="Nom de l'article" class="input-field !mb-0 flex-1">
+                    <input v-model="item.reference" placeholder="REF (Optionnel)" class="input-field !mb-0 w-32 text-xs">
+                    <input v-model="item.quantity" type="number" placeholder="Qté" class="input-field !mb-0 w-20">
+                    <button @click="editForm.items.splice(index, 1)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                 </div>
+                 <button @click="editForm.items.push({ productName: '', quantity: 1, reference: '' })" class="btn bg-white/5 text-slate-400 border border-dashed border-white/10 w-full mt-2 hover:bg-white/10 italic text-xs">
+                   + Ajouter un article
+                 </button>
+              </template>
+              <template v-else>
+                <div v-for="item in request.items" :key="item.id" class="flex justify-between items-center bg-white/[0.02] p-4 rounded-2xl border border-white/5 hover:bg-white/[0.05] transition-colors">
+                  <div>
+                    <div class="font-bold text-slate-200 text-lg">{{ item.productName }}</div>
+                    <div class="text-[10px] text-slate-500 font-mono mt-1">REF: {{ item.reference || 'N/A' }}</div>
+                  </div>
+                  <div class="text-2xl font-black text-indigo-400">×{{ item.quantity }}</div>
                 </div>
-                <div class="text-2xl font-black text-indigo-400">×{{ item.quantity }}</div>
-              </div>
+              </template>
             </div>
           </div>
         </section>
@@ -321,6 +351,12 @@ const newMessage = ref('');
 const messageBox = ref(null);
 const uploading = ref(false);
 const approvalComment = ref('');
+const isEditing = ref(false);
+const editForm = ref({
+  title: '',
+  description: '',
+  items: []
+});
 
 const isEditingQuote = ref(false);
 const showQuoteModal = ref(false);
@@ -398,6 +434,9 @@ const chatActive = computed(() => {
 const fetchRequest = async () => {
   const res = await axios.get(`/api/purchase-requests/${route.params.id}`);
   request.value = res.data;
+  editForm.value.title = res.data.title;
+  editForm.value.description = res.data.description;
+  editForm.value.items = res.data.items.map(i => ({ productName: i.productName, quantity: i.quantity, reference: i.reference }));
   messages.value = res.data.messages || [];
   await nextTick();
   scrollToBottom();
@@ -600,6 +639,26 @@ const updateStatus = async (status) => {
     fetchRequest();
   } catch (error) {
     alert('Echec de la mise a jour.');
+  }
+};
+const confirmDelete = async () => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer définitivement cette demande en brouillon ?')) {
+    try {
+      await axios.delete(`/api/purchase-requests/${route.params.id}`);
+      router.push('/dashboard');
+    } catch (error) {
+      alert('Echec de la suppression.');
+    }
+  }
+};
+
+const saveEdits = async () => {
+  try {
+    await axios.put(`/api/purchase-requests/${route.params.id}`, editForm.value);
+    isEditing.value = false;
+    await fetchRequest();
+  } catch (error) {
+    alert('Echec de la sauvegarde.');
   }
 };
 </script>

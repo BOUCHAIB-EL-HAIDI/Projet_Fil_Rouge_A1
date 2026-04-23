@@ -111,28 +111,37 @@ class PurchaseRequestController extends Controller
         $oldStatus = $purchaseRequest->status;
         $requestedStatus = $request->status;
 
-        if ($requestedStatus && $oldStatus->value !== $requestedStatus) {
-            if ($user->role === 'demandeur') {
-                if ($oldStatus !== PurchaseRequestStatus::DRAFT || $requestedStatus !== PurchaseRequestStatus::PENDING_MANAGER->value) {
-                    return response()->json(['message' => 'Action non autorisée pour votre rôle.'], 403);
-                }
-            } elseif ($user->role === 'acheteur') {
-                if (!in_array($requestedStatus, [
-                    PurchaseRequestStatus::IN_PROGRESS->value,
-                    PurchaseRequestStatus::ORDERED->value,
-                    PurchaseRequestStatus::CONSULTATION->value,
-                    PurchaseRequestStatus::DELIVERED->value
-                ])) {
-                    return response()->json(['message' => 'Configuration de statut invalide pour l\'acheteur.'], 403);
-                }
-            } elseif ($user->role !== 'directeur') {
-                 if ($purchaseRequest->user_id !== $user->id) {
-                     return response()->json(['message' => 'Veuillez utiliser le module de validation.'], 403);
-                 }
+        if ($user->role === 'demandeur') {
+            if ($oldStatus !== PurchaseRequestStatus::DRAFT) {
+                return response()->json(['message' => 'Une demande soumise ne peut plus être modifiée.'], 403);
             }
+            
+            if ($requestedStatus && $requestedStatus !== PurchaseRequestStatus::PENDING_MANAGER->value) {
+                 return response()->json(['message' => 'Statut invalide pour un demandeur.'], 403);
+            }
+        } elseif ($user->role === 'acheteur') {
+            if ($requestedStatus && !in_array($requestedStatus, [
+                PurchaseRequestStatus::IN_PROGRESS->value,
+                PurchaseRequestStatus::ORDERED->value,
+                PurchaseRequestStatus::CONSULTATION->value,
+                PurchaseRequestStatus::DELIVERED->value
+            ])) {
+                return response()->json(['message' => 'Configuration de statut invalide pour l\'acheteur.'], 403);
+            }
+        } elseif ($user->role !== 'directeur') {
+             if ($purchaseRequest->user_id !== $user->id) {
+                 return response()->json(['message' => 'Veuillez utiliser le module de validation.'], 403);
+             }
         }
 
         $purchaseRequest->update($request->only(['title', 'description', 'priority', 'status']));
+
+        if ($request->has('items') && $user->role === 'demandeur' && $oldStatus === PurchaseRequestStatus::DRAFT) {
+            $purchaseRequest->items()->delete();
+            foreach ($request->items as $item) {
+                $purchaseRequest->items()->create($item);
+            }
+        }
 
         if ($requestedStatus && $oldStatus->value !== $requestedStatus) {
             RequestStatusHistory::create([
@@ -156,8 +165,21 @@ class PurchaseRequestController extends Controller
     }
 
 
-    public function destroy(PurchaseRequest $purchaseRequest)
+    public function destroy(Request $request, PurchaseRequest $purchaseRequest)
     {
+        $user = $request->user();
+        
+        if ($user->role === 'demandeur') {
+            if ($purchaseRequest->user_id !== $user->id) {
+                return response()->json(['message' => 'Non autorisé.'], 403);
+            }
+            if ($purchaseRequest->status !== PurchaseRequestStatus::DRAFT) {
+                return response()->json(['message' => 'Impossible de supprimer une demande déjà soumise.'], 403);
+            }
+        } elseif ($user->role !== 'directeur') {
+             return response()->json(['message' => 'Seul le directeur ou le créateur (si brouillon) peut supprimer une demande.'], 403);
+        }
+
         $purchaseRequest->delete();
         return response()->json(null, 204);
     }
