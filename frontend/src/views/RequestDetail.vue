@@ -338,12 +338,13 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import axios from 'axios';
 import echo from '../echo';
 
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const request = ref(null);
 const messages = ref([]);
@@ -636,18 +637,21 @@ const canApprove = computed(() => {
 const updateStatus = async (status) => {
   try {
     await axios.put(`/api/purchase-requests/${route.params.id}`, { status });
-    fetchRequest();
+    await fetchRequest();
   } catch (error) {
-    alert('Echec de la mise a jour.');
+    const msg = error.response?.data?.message || error.message;
+    alert('Echec de la mise a jour : ' + msg);
   }
 };
+
 const confirmDelete = async () => {
   if (confirm('Êtes-vous sûr de vouloir supprimer définitivement cette demande en brouillon ?')) {
     try {
       await axios.delete(`/api/purchase-requests/${route.params.id}`);
-      router.push('/dashboard');
+      router.push('/');
     } catch (error) {
-      alert('Echec de la suppression.');
+      const msg = error.response?.data?.message || error.message;
+      alert('Echec de la suppression : ' + msg);
     }
   }
 };
@@ -658,7 +662,8 @@ const saveEdits = async () => {
     isEditing.value = false;
     await fetchRequest();
   } catch (error) {
-    alert('Echec de la sauvegarde.');
+    const msg = error.response?.data?.message || error.message;
+    alert('Echec de la sauvegarde : ' + msg);
   }
 };
 </script>

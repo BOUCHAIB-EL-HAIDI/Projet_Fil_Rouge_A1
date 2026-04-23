@@ -165,9 +165,9 @@ class PurchaseRequestController extends Controller
     }
 
 
-    public function destroy(Request $request, PurchaseRequest $purchaseRequest)
+    public function destroy(PurchaseRequest $purchaseRequest)
     {
-        $user = $request->user();
+        $user = auth()->user();
         
         if ($user->role === 'demandeur') {
             if ($purchaseRequest->user_id !== $user->id) {
@@ -179,6 +179,14 @@ class PurchaseRequestController extends Controller
         } elseif ($user->role !== 'directeur') {
              return response()->json(['message' => 'Seul le directeur ou le créateur (si brouillon) peut supprimer une demande.'], 403);
         }
+
+        // Clean up relationships manually to avoid foreign key issues
+        $purchaseRequest->items()->delete();
+        $purchaseRequest->approvals()->delete();
+        $purchaseRequest->statusHistories()->delete();
+        $purchaseRequest->messages()->delete();
+        $purchaseRequest->attachments()->delete();
+        $purchaseRequest->devis()->delete();
 
         $purchaseRequest->delete();
         return response()->json(null, 204);
