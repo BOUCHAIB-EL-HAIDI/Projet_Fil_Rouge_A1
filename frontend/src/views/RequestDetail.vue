@@ -550,12 +550,12 @@ onMounted(async () => {
   await fetchRequest();
   await fetchSuppliers();
   
-  echo.private(`purchase-request.${route.params.id}`)
-    .listen('MessageSent', (e) => {
+  echo.channel(`purchase-request.${route.params.id}`)
+    .listen('.message.sent', (e) => {
       messages.value.push(e.message);
       nextTick(scrollToBottom);
     })
-    .listen('PurchaseRequestStatusUpdated', (e) => {
+    .listen('.status.updated', (e) => {
       fetchRequest();
     });
 });
