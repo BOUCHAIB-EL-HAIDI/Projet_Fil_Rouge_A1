@@ -17,13 +17,6 @@
       </div>
       
       <div class="flex gap-4">
-        <template v-if="canApprove">
-          <div class="flex gap-4">
-            <button @click="submitApproval('approved')" class="btn flex-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]">Approuver</button>
-            <button @click="submitApproval('rejected')" class="btn flex-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white shadow-[0_0_15px_-5px_rgba(244,63,94,0.3)]">Refuser</button>
-          </div>
-        </template>
-
         <button v-if="isDemandeurAndDraft" @click="updateStatus('pending_manager')" class="btn bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-white">
           Soumettre la demande
         </button>
@@ -110,6 +103,24 @@
       </div>
 
       <div class="space-y-8">
+        <section v-if="canApprove" class="glass-card !border-indigo-500/30 bg-indigo-500/5 shadow-[0_0_50px_-12px_rgba(99,102,241,0.2)]">
+           <h3 class="text-xs font-black uppercase tracking-[0.2em] text-indigo-400 mb-6 flex items-center gap-4">
+            <span class="w-8 h-[1px] bg-indigo-500/50"></span>
+            Décision Requise
+            <span class="flex-1 h-[1px] bg-white/5"></span>
+          </h3>
+          <div class="space-y-4">
+            <div>
+              <span class="text-[9px] font-black uppercase tracking-widest text-slate-500 block mb-2 px-1">Commentaire (Facultatif)</span>
+              <textarea v-model="approvalComment" class="input-field !mb-0 h-24 text-xs py-3 placeholder:text-slate-600" placeholder="Motif de l'approbation ou du refus..."></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <button @click="submitApproval('approved')" class="btn bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white shadow-lg shadow-emerald-500/10 transition-all font-bold uppercase text-[10px] tracking-widest">Approuver</button>
+              <button @click="submitApproval('rejected')" class="btn bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white shadow-lg shadow-rose-500/10 transition-all font-bold uppercase text-[10px] tracking-widest">Refuser</button>
+            </div>
+          </div>
+        </section>
+
         <section class="glass-card">
            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-pink-400 mb-6 flex items-center gap-4">
             <span class="w-8 h-[1px] bg-pink-500/50"></span>
@@ -185,6 +196,34 @@
               </div>
             </div>
             <div v-if="!request.devis || request.devis.length === 0" class="text-xs text-slate-500 italic text-center p-8 border border-dashed border-white/10 rounded-2xl">Aucun devis enregistre.</div>
+          </div>
+        </section>
+
+        <section v-if="request.approvals && request.approvals.length > 0" class="glass-card">
+          <h3 class="text-xs font-black uppercase tracking-[0.2em] text-cyan-400 mb-6 flex items-center gap-4">
+            <span class="w-8 h-[1px] bg-cyan-500/50"></span>
+            Décisions & Commentaires
+            <span class="flex-1 h-[1px] bg-white/5"></span>
+          </h3>
+          <div class="space-y-4">
+            <div v-for="approval in request.approvals" :key="approval.id" class="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3">
+                  <div :class="['w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs', 
+                    approval.decision === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400']">
+                    {{ approval.decision === 'approved' ? 'A' : 'R' }}
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-slate-200">{{ approval.user.name }}</div>
+                    <div class="text-[9px] text-slate-500 uppercase font-black">Etape {{ approval.step }} • {{ approval.user.role }}</div>
+                  </div>
+                </div>
+                <div class="text-[9px] font-mono text-slate-600">{{ new Date(approval.decidedAt).toLocaleString() }}</div>
+              </div>
+              <div v-if="approval.comment" class="bg-black/20 p-3 rounded-xl border border-white/5 italic text-xs text-slate-400 leading-relaxed shadow-inner">
+                "{{ approval.comment }}"
+              </div>
+            </div>
           </div>
         </section>
 
@@ -281,6 +320,7 @@ const messages = ref([]);
 const newMessage = ref('');
 const messageBox = ref(null);
 const uploading = ref(false);
+const approvalComment = ref('');
 
 const isEditingQuote = ref(false);
 const showQuoteModal = ref(false);
@@ -314,8 +354,10 @@ const openQuoteModal = () => {
 const submitApproval = async (decision) => {
   try {
     await axios.post(`/api/purchase-requests/${route.params.id}/approvals`, {
-      decision: decision
+      decision: decision,
+      comment: approvalComment.value
     });
+    approvalComment.value = '';
     fetchRequest();
   } catch (error) {
     alert(error.response?.data?.message || 'Echec de l\'operation.');

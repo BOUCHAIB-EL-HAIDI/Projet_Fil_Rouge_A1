@@ -3,14 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\PurchaseRequestStatus;
+use App\Enums\PurchaseRequestPriority;
+use App\Models\User;
+use App\Notifications\PurchaseRequestNotification;
 
 class PurchaseRequest extends Model
 {
     protected $fillable = ['title', 'description', 'status', 'priority', 'user_id', 'department_id'];
 
     protected $casts = [
-        'status' => \App\Enums\PurchaseRequestStatus::class,
-        'priority' => \App\Enums\PurchaseRequestPriority::class,
+        'status' => PurchaseRequestStatus::class,
+        'priority' => PurchaseRequestPriority::class,
     ];
 
     public function user()
@@ -59,10 +63,10 @@ class PurchaseRequest extends Model
         if ($this->user) $users->push($this->user);
         if ($this->department?->manager) $users->push($this->department->manager);
         
-        $directeurs = \App\Models\User::where('role', 'directeur')->get();
+        $directeurs = User::where('role', 'directeur')->get();
         $users = $users->merge($directeurs);
         
-        $acheteurs = \App\Models\User::where('role', 'acheteur')->get();
+        $acheteurs = User::where('role', 'acheteur')->get();
         $users = $users->merge($acheteurs);
 
         $users = $users->unique('id');
@@ -71,7 +75,7 @@ class PurchaseRequest extends Model
         }
 
         foreach ($users as $u) {
-            $u->notify(new \App\Notifications\PurchaseRequestNotification([
+            $u->notify(new PurchaseRequestNotification([
                 'title' => $title,
                 'message' => $message,
                 'purchase_request_id' => $this->id,
