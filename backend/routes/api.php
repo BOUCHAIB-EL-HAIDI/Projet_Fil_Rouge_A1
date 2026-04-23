@@ -14,7 +14,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::middleware('directeur')->group(function () {
+    Route::middleware('role:directeur')->group(function () {
         Route::post('/departments', [DepartmentController::class, 'store']);
         Route::patch('/departments/{department}', [DepartmentController::class, 'update']);
         Route::delete('/departments/{department}', [DepartmentController::class, 'destroy']);
