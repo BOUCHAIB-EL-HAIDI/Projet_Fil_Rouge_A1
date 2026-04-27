@@ -114,8 +114,9 @@
           </div>
           <div class="flex gap-4 p-2 bg-white/5 rounded-2xl">
             <input v-model="newMessage" @keyup.enter="sendMessage" class="input-field !bg-transparent !border-0 !mb-0 font-mono text-sm focus:ring-0" placeholder="Tapez votre message..." />
-            <button @click="sendMessage" class="p-3 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">
-              <svg class="w-5 h-5 -rotate-45 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            <button @click="sendMessage" :disabled="sending" class="p-3 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50">
+              <svg v-if="sending" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <svg v-else class="w-5 h-5 -rotate-45 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
             </button>
           </div>
         </section>
@@ -351,6 +352,7 @@ const messages = ref([]);
 const newMessage = ref('');
 const messageBox = ref(null);
 const uploading = ref(false);
+const sending = ref(false);
 const approvalComment = ref('');
 const isEditing = ref(false);
 const editForm = ref({
@@ -590,8 +592,10 @@ onMounted(async () => {
   
   echo.channel(`purchase-request.${route.params.id}`)
     .listen('.message.sent', (e) => {
-      messages.value.push(e.message);
-      nextTick(scrollToBottom);
+      if (!messages.value.find(m => m.id === e.message.id)) {
+        messages.value.push(e.message);
+        nextTick(scrollToBottom);
+      }
     })
     .listen('.status.updated', (e) => {
       fetchRequest();
@@ -603,20 +607,26 @@ onUnmounted(() => {
 });
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || !chatActive.value) return;
+  if (!newMessage.value.trim() || !chatActive.value || sending.value) return;
   const messageContent = newMessage.value;
   newMessage.value = '';
+  sending.value = true;
   
   try {
     const res = await axios.post(`/api/purchase-requests/${route.params.id}/messages`, {
       content: messageContent
     });
     
-    messages.value.push(res.data);
-    nextTick(scrollToBottom);
+    if (!messages.value.find(m => m.id === res.data.id)) {
+      messages.value.push(res.data);
+      nextTick(scrollToBottom);
+    }
   } catch (error) {
     console.error('Failed to send message', error);
     alert('Echec de l\'envoi du message.');
+    newMessage.value = messageContent; // Restore message on failure
+  } finally {
+    sending.value = false;
   }
 };
 

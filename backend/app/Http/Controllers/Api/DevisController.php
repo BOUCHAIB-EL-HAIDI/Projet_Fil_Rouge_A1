@@ -31,7 +31,7 @@ class DevisController extends Controller
 
         $devis = $purchaseRequest->devis()->create($data);
 
-        // Update request status to consultation if it was in_progress or approved
+       
         if (in_array($purchaseRequest->status, [PurchaseRequestStatus::APPROVED, PurchaseRequestStatus::IN_PROGRESS])) {
             $purchaseRequest->update(['status' => PurchaseRequestStatus::CONSULTATION]);
             event(new \App\Events\PurchaseRequestStatusUpdated($purchaseRequest));
