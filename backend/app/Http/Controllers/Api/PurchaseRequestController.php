@@ -85,6 +85,37 @@ class PurchaseRequestController extends Controller
 
     public function show(PurchaseRequest $purchaseRequest)
     {
+        $user = auth()->user();
+
+        // Autorisation : Vérifier si l'utilisateur a le droit de voir cette demande
+        $canAccess = false;
+        if ($user->role === 'directeur') {
+            $canAccess = true;
+        } elseif ($user->role === 'manager') {
+            if ($purchaseRequest->department_id === $user->department_id || $purchaseRequest->user_id === $user->id) {
+                $canAccess = true;
+            }
+        } elseif ($user->role === 'acheteur') {
+            $allowedStatuses = [
+                PurchaseRequestStatus::APPROVED,
+                PurchaseRequestStatus::IN_PROGRESS,
+                PurchaseRequestStatus::ORDERED,
+                PurchaseRequestStatus::CONSULTATION,
+                PurchaseRequestStatus::DELIVERED
+            ];
+            if (in_array($purchaseRequest->status, $allowedStatuses) || $purchaseRequest->user_id === $user->id) {
+                $canAccess = true;
+            }
+        } else {
+            if ($purchaseRequest->user_id === $user->id) {
+                $canAccess = true;
+            }
+        }
+
+        if (!$canAccess) {
+            return response()->json(['message' => 'Accès non autorisé à cette demande.'], 403);
+        }
+
         return $purchaseRequest->load([
             'user',
             'department',
